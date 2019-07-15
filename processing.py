@@ -1,3 +1,5 @@
+#author:Raisa Akter
+#Date:14.07.19
 # Linear algebra
 import numpy as np
 
