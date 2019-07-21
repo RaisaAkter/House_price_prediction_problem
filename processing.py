@@ -249,6 +249,9 @@ from sklearn.linear_model import LinearRegression
 
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
+from sklearn.svm import SVR
+
+from mlxtend.regressor import StackingCVRegressor
 kfolds = KFold(n_splits=10, shuffle=True, random_state=42)
 
 # model scoring and validation function
@@ -272,13 +275,13 @@ lightgbm = LGBMRegressor(objective='regression',
                                        verbose=-1,
                                        )
 
-# xgboost = XGBRegressor(learning_rate=0.01,n_estimators=3460,
-#                                      max_depth=3, min_child_weight=0,
-#                                      gamma=0, subsample=0.7,
-#                                      colsample_bytree=0.7,
-#                                      objective='reg:linear', nthread=-1,
-#                                      scale_pos_weight=1, seed=27,
-#                                      reg_alpha=0.00006)
+"""xgboost = XGBRegressor(learning_rate=0.01,n_estimators=3460,
+                                      max_depth=3, min_child_weight=0,
+                                      gamma=0, subsample=0.7,
+                                      colsample_bytree=0.7,
+                                      objective='reg:linear', nthread=-1,
+                                      scale_pos_weight=1, seed=27,
+                                      reg_alpha=0.00006)"""
 
 
 
@@ -306,13 +309,16 @@ elasticnet = make_pipeline(RobustScaler(), ElasticNetCV(max_iter=1e7,
 stack_gen = StackingCVRegressor(regressors=(ridge, lasso, elasticnet, lightgbm),
                                 meta_regressor=elasticnet,
                                 use_features_in_secondary=True)
+# using support vector machine algorithm
+svr = make_pipeline(RobustScaler(), SVR(C= 20, epsilon= 0.008, gamma=0.0003,))
 
 # store models, scores and prediction values 
 models = {'Ridge': ridge,
           'Lasso': lasso, 
           'ElasticNet': elasticnet,
-          'lightgbm': lightgbm}
-#           'xgboost': xgboost}
+          'lightgbm': lightgbm,
+          "SVR":svr}
+          #'xgboost': xgboost}
 predictions = {}
 scores = {}
 for name, model in models.items():
@@ -327,15 +333,17 @@ score = cv_rmse(ridge)
 #print("Ridge score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
 
 score = cv_rmse(lasso)
-#print("Lasso score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
+print("Lasso score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
 
 score = cv_rmse(elasticnet)
 #print("ElasticNet score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
 
 score = cv_rmse(lightgbm)
 #print("lightgbm score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
+score = cv_rmse(svr)
+print("SVR score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
 
-# score = cv_rmse(xgboost)
+#score = cv_rmse(xgboost)
 # print("xgboost score: {:.4f} ({:.4f})\n".format(score.mean(), score.std()))
 #Fit the training data X, y
 #print('----START Fit----',datetime.now())
@@ -345,11 +353,12 @@ elastic_model = elasticnet.fit(X, y)
 lasso_model = lasso.fit(X, y)
 #print('Ridge')
 ridge_model = ridge.fit(X, y)
+svr_model = svr.fit(X, y)
 #print('lightgbm')
 lgb_model_full_data = lightgbm.fit(X, y)
 
-# print('xgboost')
-# xgb_model_full_data = xgboost.fit(X, y)
+#print('xgboost')
+#xgb_model_full_data = xgboost.fit(X, y)
 
 
 #print('stack_gen')
@@ -359,7 +368,8 @@ def blend_models_predict(X):
             (0.25 * lasso_model.predict(X)) + \
             (0.2 * ridge_model.predict(X)) + \
             (0.15 * lgb_model_full_data.predict(X)) + \
-#             (0.1 * xgb_model_full_data.predict(X)) + \
+            (0.001 * svr_model.predict(X))+\
+            #(0.1 * xgb_model_full_data.predict(X)) + \
             (0.2 * stack_gen_model.predict(np.array(X))))
 print('RMSLE score on train data:')
 print(rmsle(y, blend_models_predict(X)))
