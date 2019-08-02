@@ -368,7 +368,7 @@ def blend_models_predict(X):
             (0.25 * lasso_model.predict(X)) + \
             (0.2 * ridge_model.predict(X)) + \
             (0.15 * lgb_model_full_data.predict(X)) + \
-            (0.001 * svr_model.predict(X))+\
+            (0.0000001 * svr_model.predict(X))+\
             #(0.1 * xgb_model_full_data.predict(X)) + \
             (0.2 * stack_gen_model.predict(np.array(X))))
 print('RMSLE score on train data:')
