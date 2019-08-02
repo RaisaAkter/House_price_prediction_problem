@@ -10,6 +10,8 @@ from scipy.stats import boxcox_normmax
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 import warnings
+from scipy import stats
+from scipy.stats import norm, skew #for some statistics
 warnings.filterwarnings('ignore')
 #import os
 
@@ -43,15 +45,71 @@ sns.distplot(train['SalePrice']);
 #skewness and kurtosis
 #print("Skewness: %f" % train['SalePrice'].skew())
 #print("Kurtosis: %f" % train['SalePrice'].kurt())
-from scipy import stats
-from scipy.stats import norm, skew #for some statistics
 
-# Plot histogram and probability
+
+#norm BsmtFinSF1
+fig = plt.figure(figsize=(15,5))
+plt.subplot(1,2,1)
+sns.distplot(train['BsmtFinSF1'] , fit=norm);
+(mu, sigma) = norm.fit(train['BsmtFinSF1'])
+#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
+            loc='best')
+plt.ylabel('Frequency')
+plt.title('BsmtFinSF1 distribution')
+plt.subplot(1,2,2)
+res = stats.probplot(train['BsmtFinSF1'], plot=plt)
+plt.suptitle('Before transformation')
+# Apply transformation
+train.BsmtFinSF1 = np.log1p(train.BsmtFinSF1 )
+# New prediction
+y_train = train.BsmtFinSF1.values
+y_train_orig = train.BsmtFinSF1
+# Plot histogram and probability after transformatio
+fig = plt.figure(figsize=(15,5))
+plt.subplot(1,2,1)
+sns.distplot(train['BsmtFinSF1'] , fit=norm);
+(mu, sigma) = norm.fit(train['BsmtFinSF1'])
+#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+#norm BsmFinSF1 close
+
+
+#norm BsmFinSF2
+fig = plt.figure(figsize=(15,5))
+plt.subplot(1,2,1)
+sns.distplot(train['BsmtFinSF2'] , fit=norm);
+(mu, sigma) = norm.fit(train['BsmtFinSF2'])
+print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
+            loc='best')
+plt.ylabel('Frequency')
+plt.title('BsmtFinSF2 distribution')
+plt.subplot(1,2,2)
+res = stats.probplot(train['BsmtFinSF2'], plot=plt)
+plt.suptitle('Before transformation')
+# Apply transformation
+train.BsmtFinSF2 = np.log1p(train.BsmtFinSF2 )
+# New prediction
+y_train = train.BsmtFinSF2.values
+y_train_orig = train.BsmtFinSF2
+# Plot histogram and probability after transformatio
+fig = plt.figure(figsize=(15,5))
+plt.subplot(1,2,1)
+sns.distplot(train['BsmtFinSF2'] , fit=norm);
+(mu, sigma) = norm.fit(train['BsmtFinSF2'])
+print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+#norm BsmFinSF2 close
+
+
+
+
+
+
 fig = plt.figure(figsize=(15,5))
 plt.subplot(1,2,1)
 sns.distplot(train['SalePrice'] , fit=norm);
 (mu, sigma) = norm.fit(train['SalePrice'])
-#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))//////
 plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
             loc='best')
 plt.ylabel('Frequency')
@@ -72,7 +130,7 @@ fig = plt.figure(figsize=(15,5))
 plt.subplot(1,2,1)
 sns.distplot(train['SalePrice'] , fit=norm);
 (mu, sigma) = norm.fit(train['SalePrice'])
-#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))
+#print( '\n mu = {:.2f} and sigma = {:.2f}\n'.format(mu, sigma))/////
 plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
             loc='best')
 plt.ylabel('Frequency')
@@ -368,7 +426,7 @@ def blend_models_predict(X):
             (0.25 * lasso_model.predict(X)) + \
             (0.2 * ridge_model.predict(X)) + \
             (0.15 * lgb_model_full_data.predict(X)) + \
-            (0.0000001 * svr_model.predict(X))+\
+            (0.001 * svr_model.predict(X))+\
             #(0.1 * xgb_model_full_data.predict(X)) + \
             (0.2 * stack_gen_model.predict(np.array(X))))
 print('RMSLE score on train data:')
@@ -382,6 +440,7 @@ submission.iloc[:,1] = (np.expm1(blend_models_predict(X_test)))
 # submission['SalePrice'] = submission['SalePrice'].apply(lambda x: x if x > q1 else x*0.77)
 # submission['SalePrice'] = submission['SalePrice'].apply(lambda x: x if x < q2 else x*1.1)
 submission.to_csv("submission.csv", index=False)
+
 
 
 
